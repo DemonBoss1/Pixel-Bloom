@@ -1,11 +1,13 @@
 package com.empire_mammoth.pixelbloom.di
 
 import com.empire_mammoth.pixelbloom.BuildConfig
+import com.empire_mammoth.pixelbloom.data.GenerateApiService
 import dagger.Module
 import dagger.Provides
 import okhttp3.Interceptor
 import okhttp3.OkHttp
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -28,11 +30,21 @@ class ApiModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        authInterceptor: Interceptor
+        authInterceptor: Interceptor,
+        httpLoggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(httpLoggingInterceptor)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
     }
 
     @Provides
@@ -43,5 +55,11 @@ class ApiModule {
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGenerateApiService(retrofit: Retrofit): GenerateApiService {
+        return retrofit.create(GenerateApiService::class.java)
     }
 }
