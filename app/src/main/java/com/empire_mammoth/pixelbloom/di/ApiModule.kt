@@ -1,11 +1,10 @@
 package com.empire_mammoth.pixelbloom.di
 
 import com.empire_mammoth.pixelbloom.BuildConfig
-import com.empire_mammoth.pixelbloom.data.GenerateApiService
+import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
 import dagger.Module
 import dagger.Provides
 import okhttp3.Interceptor
-import okhttp3.OkHttp
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

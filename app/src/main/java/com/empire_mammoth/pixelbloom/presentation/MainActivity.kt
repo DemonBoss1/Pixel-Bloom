@@ -1,14 +1,12 @@
 package com.empire_mammoth.pixelbloom.presentation
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.empire_mammoth.pixelbloom.R
-import com.empire_mammoth.pixelbloom.data.GenerateApiService
+import androidx.lifecycle.lifecycleScope
+import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
 import com.empire_mammoth.pixelbloom.databinding.ActivityMainBinding
 import com.empire_mammoth.pixelbloom.di.DaggerAppComponent
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
@@ -26,8 +24,17 @@ class MainActivity : AppCompatActivity() {
         val appComponent = DaggerAppComponent.create()
         appComponent.inject(this)
 
-        val data = generateApiService.getPipeline()
-            //binding?.textViewMain?.text = data.body().toString()
+        lifecycleScope.launch {
+            try {
+                val pipeline = generateApiService.getPipeline()
+                runOnUiThread {
+                    binding?.textViewMain?.text = pipeline[0].toString()
+                }
+                // Работа с pipeline
+            } catch (e: Exception) {
+                // Обработка ошибки
+            }
+        }
 
     }
 }
