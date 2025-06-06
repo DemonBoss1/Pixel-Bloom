@@ -3,6 +3,7 @@ package com.empire_mammoth.pixelbloom.presentation
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -28,6 +29,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding?.root)
 
+        binding?.progressBar?.visibility = View.VISIBLE
+
         val appComponent = DaggerAppComponent.create()
         appComponent.inject(this)
 
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity() {
                 val pipeline = generateApiService.getPipeline()
                 val generationStatusResponse = generateImage(pipeline[0].id, "Sun in sky")
                 runOnUiThread {
+                    binding?.progressBar?.visibility = View.GONE
                     generationStatusResponse?.first()?.let { file ->
                         binding?.imageViewMain?.let { imageView ->
                             displayBase64Image(file, imageView)
