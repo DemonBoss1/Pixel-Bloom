@@ -4,14 +4,17 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
+import com.empire_mammoth.pixelbloom.data.model.GenerationStatusResponse
 import com.empire_mammoth.pixelbloom.databinding.ActivityMainBinding
 import com.empire_mammoth.pixelbloom.di.DaggerAppComponent
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    private var binding: ActivityMainBinding? =null
+    private var binding: ActivityMainBinding? = null
 
     @Inject
     lateinit var generateApiService: GenerateApiService
@@ -27,8 +30,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val pipeline = generateApiService.getPipeline()
+                val generationStatusResponse = generateImage(pipeline[0].id, "Sun in sky")
                 runOnUiThread {
-                    binding?.textViewMain?.text = pipeline[0].toString()
+                    binding?.textViewMain?.text = generationStatusResponse.uuid
                 }
                 // Работа с pipeline
             } catch (e: Exception) {
@@ -36,5 +40,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
+    }
+
+    private suspend fun generateImage(pipelineId: String, prompt: String): GenerationStatusResponse {
+
+        val paramsJson = """
+            {"type": "GENERATE", "numImages": 1, "width": 1024, "height": 1024, "generateParams": {"query": "$prompt"}}
+        """.trimIndent() // Use a multi-line string for readability
+
+        val pipelineIdBody = pipelineId.toRequestBody("text/plain".toMediaTypeOrNull())
+        val paramsBody = paramsJson.toRequestBody("application/json".toMediaTypeOrNull())
+
+        return generateApiService.generateImage(pipelineIdBody, paramsBody)
     }
 }
