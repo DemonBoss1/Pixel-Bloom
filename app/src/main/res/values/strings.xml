@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Pixel Bloom</string>
+    <string name="image">image</string>
 </resources>

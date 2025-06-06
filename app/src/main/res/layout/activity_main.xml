@@ -7,9 +7,10 @@
     android:layout_height="match_parent"
     tools:context=".presentation.MainActivity">
 
-    <TextView
-        android:id="@+id/textViewMain"
+    <ImageView
+        android:id="@+id/imageViewMain"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:contentDescription="@string/image" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

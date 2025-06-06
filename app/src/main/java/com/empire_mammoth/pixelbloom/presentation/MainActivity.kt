@@ -1,6 +1,9 @@
 package com.empire_mammoth.pixelbloom.presentation
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Base64
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
@@ -33,7 +36,11 @@ class MainActivity : AppCompatActivity() {
                 val pipeline = generateApiService.getPipeline()
                 val generationStatusResponse = generateImage(pipeline[0].id, "Sun in sky")
                 runOnUiThread {
-                    binding?.textViewMain?.text = generationStatusResponse?.first()
+                    generationStatusResponse?.first()?.let { file ->
+                        binding?.imageViewMain?.let { imageView ->
+                            displayBase64Image(file, imageView)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 // Обработка ошибки
@@ -55,12 +62,27 @@ class MainActivity : AppCompatActivity() {
         val generationStatusResponse = generateApiService.generateImage(pipelineIdBody, paramsBody)
 
         var attempts = 60
-        while(attempts>0){
+        while (attempts > 0) {
             val status = generateApiService.getGenerationStatus(generationStatusResponse.uuid)
-            if(status.status == "DONE") return status.result?.files
+            if (status.status == "DONE") return status.result?.files
             attempts -= 1
-            delay(5000)
+            delay(1000)
         }
         return null
+    }
+
+    private fun displayBase64Image(base64String: String, imageView: ImageView) {
+        try {
+            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            imageView.setImageBitmap(bitmap)
+
+        } catch (e: IllegalArgumentException) {
+            println("Error decoding Base64 string: ${e.message}")
+            e.printStackTrace()
+        } catch (e: Exception) {
+            println("Error displaying image: ${e.message}")
+            e.printStackTrace()
+        }
     }
 }
