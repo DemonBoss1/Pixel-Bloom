@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding?.root)
 
         binding?.progressBar?.visibility = View.VISIBLE
+        binding?.imageViewMain?.visibility = View.GONE
 
         val appComponent = DaggerAppComponent.create()
         appComponent.inject(this)
@@ -37,17 +38,20 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val pipeline = generateApiService.getPipeline()
-                val generationStatusResponse = generateImage(pipeline[0].id, "Sun in sky")
+                val generationStatusResponse = generateImage(pipeline[0].id, "Аниме")
                 runOnUiThread {
-                    binding?.progressBar?.visibility = View.GONE
-                    generationStatusResponse?.first()?.let { file ->
-                        binding?.imageViewMain?.let { imageView ->
-                            displayBase64Image(file, imageView)
+                    binding?.apply {
+                        progressBar.visibility = View.GONE
+                        imageViewMain.visibility = View.VISIBLE
+
+                        generationStatusResponse?.first()?.let { file ->
+                            imageViewMain.visibility = View.VISIBLE
+                            displayBase64Image(file, imageViewMain)
                         }
                     }
                 }
             } catch (e: Exception) {
-                // Обработка ошибки
+                binding?.imageViewMain?.visibility = View.VISIBLE
             }
         }
 
