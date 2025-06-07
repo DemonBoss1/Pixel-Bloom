@@ -29,33 +29,34 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding?.root)
 
-        binding?.progressBar?.visibility = View.VISIBLE
-        binding?.imageViewMain?.visibility = View.GONE
-
         val appComponent = DaggerAppComponent.create()
         appComponent.inject(this)
 
-        lifecycleScope.launch {
-            try {
-                val pipeline = generateApiService.getPipeline()
-                val generationStatusResponse = generateImage(pipeline[0].id, "Аниме")
-                runOnUiThread {
-                    binding?.apply {
-                        progressBar.visibility = View.GONE
-                        imageViewMain.visibility = View.VISIBLE
+        binding?.apply {
+            imageViewMain.visibility = View.GONE
+            sendButton.setOnClickListener {
+                progressBar.visibility = View.VISIBLE
+                lifecycleScope.launch {
+                    try {
+                        val pipeline = generateApiService.getPipeline()
+                        val generationStatusResponse = generateImage(pipeline[0].id, "Аниме")
+                        runOnUiThread {
+                            binding?.apply {
+                                progressBar.visibility = View.GONE
+                                imageViewMain.visibility = View.VISIBLE
 
-                        generationStatusResponse?.first()?.let { file ->
-                            imageViewMain.visibility = View.VISIBLE
-                            displayBase64Image(file, imageViewMain)
+                                generationStatusResponse?.first()?.let { file ->
+                                    imageViewMain.visibility = View.VISIBLE
+                                    displayBase64Image(file, imageViewMain)
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        binding?.imageViewMain?.visibility = View.VISIBLE
                     }
                 }
-            } catch (e: Exception) {
-                binding?.imageViewMain?.visibility = View.VISIBLE
             }
         }
-
-
     }
 
     private suspend fun generateImage(pipelineId: String, prompt: String): List<String>? {
