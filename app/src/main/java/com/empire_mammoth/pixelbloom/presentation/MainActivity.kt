@@ -33,13 +33,14 @@ class MainActivity : AppCompatActivity() {
         appComponent.inject(this)
 
         binding?.apply {
-            imageViewMain.visibility = View.GONE
             sendButton.setOnClickListener {
+                imageViewMain.visibility = View.GONE
                 progressBar.visibility = View.VISIBLE
                 lifecycleScope.launch {
                     try {
                         val pipeline = generateApiService.getPipeline()
-                        val generationStatusResponse = generateImage(pipeline[0].id, "Аниме")
+                        val prompt = editTextPrompt.text.toString()
+                        val generationStatusResponse = generateImage(pipeline[0].id, prompt)
                         runOnUiThread {
                             binding?.apply {
                                 progressBar.visibility = View.GONE
