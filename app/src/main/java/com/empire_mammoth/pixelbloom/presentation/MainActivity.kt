@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
 
         binding?.apply {
             sendButton.setOnClickListener {
+                sendButton.isEnabled = false
                 imageViewMain.visibility = View.GONE
                 progressBar.visibility = View.VISIBLE
                 lifecycleScope.launch {
@@ -43,6 +44,7 @@ class MainActivity : AppCompatActivity() {
                         val generationStatusResponse = generateImage(pipeline[0].id, prompt)
                         runOnUiThread {
                             binding?.apply {
+                                sendButton.isEnabled = true
                                 progressBar.visibility = View.GONE
                                 imageViewMain.visibility = View.VISIBLE
 
