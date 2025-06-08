@@ -1,9 +1,11 @@
 package com.empire_mammoth.pixelbloom.presentation
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -37,6 +39,11 @@ class MainActivity : AppCompatActivity() {
                 sendButton.isEnabled = false
                 imageViewMain.visibility = View.GONE
                 progressBar.visibility = View.VISIBLE
+
+                editTextPrompt.clearFocus()
+                val imm = baseContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(editTextPrompt.windowToken, 0)
+
                 lifecycleScope.launch {
                     try {
                         val pipeline = generateApiService.getPipeline()
