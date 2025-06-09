@@ -4,6 +4,8 @@ import com.empire_mammoth.pixelbloom.BuildConfig
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -12,7 +14,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
-class ApiModule {
+@InstallIn(SingletonComponent::class)
+object ApiModule {
+
     @Provides
     @Singleton
     fun provideAuthInterceptor(): Interceptor {
@@ -28,6 +32,18 @@ class ApiModule {
 
     @Provides
     @Singleton
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+    }
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
         authInterceptor: Interceptor,
         httpLoggingInterceptor: HttpLoggingInterceptor
@@ -36,14 +52,6 @@ class ApiModule {
             .addInterceptor(authInterceptor)
             .addInterceptor(httpLoggingInterceptor)
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
     }
 
     @Provides
