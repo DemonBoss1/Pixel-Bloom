@@ -1,6 +1,7 @@
 package com.empire_mammoth.pixelbloom.presentation.view
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.empire_mammoth.pixelbloom.R
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
 import com.empire_mammoth.pixelbloom.databinding.ActivityMainBinding
 import com.empire_mammoth.pixelbloom.presentation.viewmodel.MainViewModel
@@ -31,6 +33,10 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var generateApiService: GenerateApiService
+
+    private val defaultBitmap: Bitmap by lazy {
+        BitmapFactory.decodeResource(resources, R.drawable.error_image)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,11 +58,14 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { bitmap ->
+                viewModel.uiState.collect { state ->
                     binding?.apply {
                         sendButton.isEnabled = true
                         progressBar.visibility = View.GONE
-                        imageViewMain.setImageBitmap(bitmap)
+                        if (state.isError)
+                            imageViewMain.setImageBitmap(defaultBitmap)
+                        else
+                            imageViewMain.setImageBitmap(state.bitmap)
                         imageViewMain.visibility = View.VISIBLE
                     }
                 }

@@ -8,6 +8,7 @@ import android.widget.ImageView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
+import com.empire_mammoth.pixelbloom.presentation.model.ViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,18 +22,20 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(val generateApiService: GenerateApiService) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<Bitmap?>(null)
-    val uiState: StateFlow<Bitmap?> = _uiState
+    private var idRequest = 0
+    private val _uiState = MutableStateFlow<ViewState>(ViewState(idRequest, null, false))
+    val uiState: StateFlow<ViewState> = _uiState
 
     fun generate(prompt: String) {
+        idRequest++
         viewModelScope.launch {
             try {
                 val pipeline = generateApiService.getPipeline()
                 val generationStatusResponse = generateImage(pipeline[0].id, prompt)
-                generationStatusResponse?.first()?.let { file ->
-                    val bitmap = displayBase64Image(file)
-                    _uiState.update { bitmap }
+                val bitmap = generationStatusResponse?.firstOrNull()?.let { base64String ->
+                    displayBase64Image(base64String)
                 }
+                _uiState.update { ViewState(idRequest, bitmap, bitmap == null) }
             } catch (e: Exception) {
 
             }
