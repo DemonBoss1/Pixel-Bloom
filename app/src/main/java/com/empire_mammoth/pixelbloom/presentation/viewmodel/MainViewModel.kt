@@ -52,7 +52,6 @@ class MainViewModel @Inject constructor(
                     displayBase64Image(base64String)
                 }
                 _uiState.update { ViewState(idRequest, bitmap, bitmap == null) }
-                bitmap?.let { saveImage(it) }
             } catch (e: Exception) {
 
             }
@@ -93,6 +92,10 @@ class MainViewModel @Inject constructor(
             e.printStackTrace()
         }
         return null
+    }
+
+    fun saveData() {
+        _uiState.value.bitmap?.let { saveImage(it) }
     }
 
     fun saveImage(bitmap: Bitmap) = viewModelScope.launch {
