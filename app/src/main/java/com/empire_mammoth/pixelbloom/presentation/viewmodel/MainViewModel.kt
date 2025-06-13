@@ -15,7 +15,10 @@ import android.widget.ImageView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
+import com.empire_mammoth.pixelbloom.data.model.Pipeline
 import com.empire_mammoth.pixelbloom.domain.model.SaveStatus
+import com.empire_mammoth.pixelbloom.domain.usecase.GetGenerateImageUseCase
+import com.empire_mammoth.pixelbloom.domain.usecase.GetPipelineUseCase
 import com.empire_mammoth.pixelbloom.presentation.model.ViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,8 +36,11 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
-    val generateApiService: GenerateApiService) : ViewModel() {
+    val getPipelineUseCase: GetPipelineUseCase,
+    val getGenerateImageUseCase: GetGenerateImageUseCase
+) : ViewModel() {
 
+    private var pipeline: Pipeline? =null
     private var idRequest = 0
     private val _uiState = MutableStateFlow<ViewState>(ViewState(idRequest, null, false))
     val uiState: StateFlow<ViewState> = _uiState
@@ -46,37 +52,16 @@ class MainViewModel @Inject constructor(
         idRequest++
         viewModelScope.launch {
             try {
-                val pipeline = generateApiService.getPipeline()
-                val generationStatusResponse = generateImage(pipeline[0].id, prompt)
+                pipeline = if(pipeline==null) getPipelineUseCase() else pipeline
+                val generationStatusResponse = pipeline?.let { getGenerateImageUseCase(it.id, prompt) }
                 val bitmap = generationStatusResponse?.firstOrNull()?.let { base64String ->
                     displayBase64Image(base64String)
                 }
                 _uiState.update { ViewState(idRequest, bitmap, bitmap == null) }
             } catch (e: Exception) {
-
+                val error = e.message
             }
         }
-    }
-
-    private suspend fun generateImage(pipelineId: String, prompt: String): List<String>? {
-
-        val paramsJson = """
-            {"type": "GENERATE", "numImages": 1, "width": 1024, "height": 1024, "generateParams": {"query": "$prompt"}}
-        """.trimIndent()
-
-        val pipelineIdBody = pipelineId.toRequestBody("text/plain".toMediaTypeOrNull())
-        val paramsBody = paramsJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-        val generationStatusResponse = generateApiService.generateImage(pipelineIdBody, paramsBody)
-
-        var attempts = 60
-        while (attempts > 0) {
-            val status = generateApiService.getGenerationStatus(generationStatusResponse.uuid)
-            if (status.status == "DONE") return status.result?.files
-            attempts -= 1
-            delay(1000)
-        }
-        return null
     }
 
     private fun displayBase64Image(base64String: String): Bitmap? {
@@ -103,7 +88,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    val uri = saveImageToPictures(appContext, bitmap, "img_${System.currentTimeMillis()}")
+                    val uri =
+                        saveImageToPictures(appContext, bitmap, "img_${System.currentTimeMillis()}")
                     uri?.let { SaveStatus.Success(it) } ?: SaveStatus.Error("Failed to save")
                 } catch (e: Exception) {
                     SaveStatus.Error(e.message ?: "Unknown error")
@@ -117,7 +103,10 @@ class MainViewModel @Inject constructor(
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, "$filename.jpg")
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PixelBloom")
+            put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_PICTURES + "/PixelBloom"
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
