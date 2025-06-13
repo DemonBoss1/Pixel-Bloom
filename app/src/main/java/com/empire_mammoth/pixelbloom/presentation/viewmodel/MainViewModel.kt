@@ -17,6 +17,7 @@ import androidx.lifecycle.viewModelScope
 import com.empire_mammoth.pixelbloom.data.api.GenerateApiService
 import com.empire_mammoth.pixelbloom.data.model.Pipeline
 import com.empire_mammoth.pixelbloom.domain.model.SaveStatus
+import com.empire_mammoth.pixelbloom.domain.usecase.DecodeImageUseCase
 import com.empire_mammoth.pixelbloom.domain.usecase.GetGenerateImageUseCase
 import com.empire_mammoth.pixelbloom.domain.usecase.GetPipelineUseCase
 import com.empire_mammoth.pixelbloom.presentation.model.ViewState
@@ -37,7 +38,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     val getPipelineUseCase: GetPipelineUseCase,
-    val getGenerateImageUseCase: GetGenerateImageUseCase
+    val getGenerateImageUseCase: GetGenerateImageUseCase,
+    val decodeImageUseCase: DecodeImageUseCase
 ) : ViewModel() {
 
     private var pipeline: Pipeline? =null
@@ -55,28 +57,13 @@ class MainViewModel @Inject constructor(
                 pipeline = if(pipeline==null) getPipelineUseCase() else pipeline
                 val generationStatusResponse = pipeline?.let { getGenerateImageUseCase(it.id, prompt) }
                 val bitmap = generationStatusResponse?.firstOrNull()?.let { base64String ->
-                    displayBase64Image(base64String)
+                    decodeImageUseCase(base64String)
                 }
                 _uiState.update { ViewState(idRequest, bitmap, bitmap == null) }
             } catch (e: Exception) {
                 val error = e.message
             }
         }
-    }
-
-    private fun displayBase64Image(base64String: String): Bitmap? {
-        try {
-            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
-            return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-
-        } catch (e: IllegalArgumentException) {
-            println("Error decoding Base64 string: ${e.message}")
-            e.printStackTrace()
-        } catch (e: Exception) {
-            println("Error displaying image: ${e.message}")
-            e.printStackTrace()
-        }
-        return null
     }
 
     fun saveData() {
